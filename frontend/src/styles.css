@@ -214,3 +214,40 @@ body {
   font-family: ui-monospace, monospace;
   text-align: right;
 }
+
+/* --- source bar ------------------------------------------------------- */
+
+.sourcebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+}
+.sourcebar--idle { color: var(--muted); }
+
+.sourcebar__kind {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.sourcebar__name { font-family: ui-monospace, monospace; font-size: 14px; }
+.sourcebar__windows { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+.sourcebar__ok { color: var(--low); font-size: 13px; font-weight: 600; }
+.sourcebar__bad { color: var(--high); font-size: 13px; font-weight: 600; }
+
+.chip {
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+}
+.chip--fake, .chip--spoof { border-color: var(--high); color: var(--high); }
+.chip--real, .chip--bonafide { border-color: var(--low); color: var(--low); }
+.chip__note { opacity: 0.6; font-size: 11px; }

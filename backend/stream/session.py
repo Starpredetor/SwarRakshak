@@ -48,12 +48,29 @@ class Session:
         self.hop_samples = int(self.sample_rate * self.hop_seconds)
         self.silence_rms: float = audio.get("silence_rms", 0.005)
 
+        self._scoring = False
+        self.source = "mic"
+        self.source_label: str | None = None
+        self.reset("mic", None)
+
+    def reset(self, source: str, source_label: str | None = None) -> None:
+        """Start a fresh run: new audio source, no history from the last one.
+
+        Every piece of carried state is cleared here, and the ring buffer is
+        the one that matters most. Without it the first windows of a new clip
+        are scored against the tail of the previous one -- literally two
+        different voices blended into a single window -- which makes
+        back-to-back A/B comparison meaningless and looks like model variance
+        rather than the bug it is.
+        """
+        self.source = source
+        self.source_label = source_label
+
         self.buffer = RingBuffer(self.window_samples)
         self.fusion = FusionState()
         self._samples_seen = 0
         self._samples_since_hop = 0
         self._last_risk = 0
-        self._scoring = False
         self._windows_scored = 0
         self._windows_dropped = 0
         self._peak_risk = 0
@@ -187,6 +204,8 @@ class Session:
         primary = self.primary
         return Verdict(
             session_id=self.session_id,
+            source=self.source,
+            source_label=self.source_label,
             t=round(self.elapsed, 2),
             risk=risk,
             band=self.fusion.band,
@@ -211,6 +230,8 @@ class Session:
         """
         return {
             "session_id": self.session_id,
+            "source": self.source,
+            "source_label": self.source_label,
             "duration_seconds": round(self.elapsed, 2),
             "windows_scored": self._windows_scored,
             "windows_dropped": self._windows_dropped,

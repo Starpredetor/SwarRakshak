@@ -27,8 +27,13 @@ fusion:
   # L1 is the only trained layer in the MVP. L1b is DSP evidence, weighted low
   # because it is a heuristic, not a calibrated model.
   weights:
-    l1_spoof: 0.85
-    l1b_dsp: 0.15
+    l1_spoof: 1.0
+    # 0.0 deliberately. This layer is explainability, not evidence -- its
+    # reference ranges are hand-picked, and on real band-limited recordings
+    # every feature lands outside them, so it emitted a constant 0.5 for every
+    # window. Fusing that did nothing but drag the score toward the middle.
+    # It still runs and still feeds the evidence panel; it just does not vote.
+    l1b_dsp: 0.0
   ema_alpha: 0.4          # smoothing over consecutive windows; lower = steadier
   ema_window: 4
 

@@ -11,9 +11,20 @@ export interface LayerScore {
   detail: Record<string, number>;
 }
 
+export interface RunInfo {
+  type: "run";
+  session_id: string;
+  source: string;
+  /** Ground truth from the clip's folder. For checking by hand -- the
+   *  detector never receives this. */
+  source_label: string | null;
+}
+
 export interface Verdict {
   type: "verdict";
   session_id: string;
+  source: string;
+  source_label: string | null;
   t: number;           // seconds since session start
   risk: number;        // 0-100
   band: Band;
@@ -39,7 +50,7 @@ export interface ErrorMessage {
   fatal: boolean;
 }
 
-export type ServerMessage = Verdict | SessionInfo | ErrorMessage;
+export type ServerMessage = Verdict | SessionInfo | RunInfo | ErrorMessage;
 
 export interface ClipInfo {
   filename: string;

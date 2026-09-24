@@ -6,6 +6,7 @@ checkpoint. That is what makes them runnable before the model has downloaded,
 and fast enough to run on every change afterwards.
 """
 import json
+import time
 
 import numpy as np
 import pytest
@@ -141,6 +142,92 @@ def test_summary_is_recorded_after_disconnect(client):
             socket.send_bytes(pcm(0.1))
         json.loads(socket.receive_text())
 
-    summary = ws_module.SESSION_SUMMARIES[session_id]
+    # The handler writes its summary in a finally block, which runs as the
+    # server task unwinds -- not necessarily before the client's context
+    # manager returns. Wait for it rather than racing it.
+    summary = None
+    for _ in range(50):
+        summary = ws_module.SESSION_SUMMARIES.get(session_id)
+        if summary is not None:
+            break
+        time.sleep(0.02)
+    assert summary is not None, "session summary was never recorded"
     assert summary["windows_scored"] >= 1
     assert "band_seconds" in summary
+
+
+# --- run isolation ------------------------------------------------------
+#
+# These cover the defect where a WebSocket connection reused one Session
+# across replays, so a new clip was scored against the previous clip's ring
+# buffer, EMA and band. Back-to-back A/B comparison in the dashboard was
+# meaningless and it looked like model variance.
+
+
+def test_replay_announces_a_run_before_any_verdict(client, tmp_path, monkeypatch):
+    import numpy as np
+    import soundfile as sf
+
+    import backend.api.ws as ws_mod
+
+    clips = tmp_path / "clips"
+    (clips / "fake").mkdir(parents=True)
+    t = np.arange(16000 * 4) / 16000
+    sf.write(str(clips / "fake" / "x.wav"), (0.2 * np.sin(2 * np.pi * 180 * t)), 16000)
+    monkeypatch.setattr(ws_mod, "CLIPS_DIR", clips)
+
+    with client.websocket_connect("/ws/stream") as socket:
+        json.loads(socket.receive_text())
+        socket.send_text(json.dumps({"type": "replay", "filename": "fake/x.wav"}))
+        first = json.loads(socket.receive_text())
+
+    assert first["type"] == "run"
+    assert first["source"] == "fake/x.wav"
+    # Ground truth comes from the folder, for checking by hand. The detector
+    # never sees it.
+    assert first["source_label"] == "fake"
+
+
+def test_mic_start_resets_state(client):
+    with client.websocket_connect("/ws/stream") as socket:
+        json.loads(socket.receive_text())
+
+        for _ in range(60):
+            socket.send_bytes(pcm(0.1))
+
+        # Advance well past the first window so the run clock is clearly
+        # non-zero; the first verdict of any run is always at t = window size.
+        before = json.loads(socket.receive_text())
+        while before["t"] < 4.0:
+            before = json.loads(socket.receive_text())
+
+        socket.send_text(json.dumps({"type": "mic_start"}))
+
+        # Verdicts scored from the previous source are already in flight and
+        # arrive after the switch. A client must skip past them rather than
+        # assume the next frame is the run marker -- which is exactly why
+        # verdicts carry `source`, so stale ones can be discarded.
+        run = json.loads(socket.receive_text())
+        while run["type"] != "run":
+            run = json.loads(socket.receive_text())
+
+        for _ in range(40):
+            socket.send_bytes(pcm(0.1))
+        after = json.loads(socket.receive_text())
+
+    assert run["type"] == "run" and run["source"] == "mic"
+    # A reset run starts its clock over; without it, elapsed time (and the
+    # EMA behind the score) would carry across sources.
+    assert after["t"] < before["t"]
+    assert after["band"] == "LOW"
+
+
+def test_verdicts_carry_their_source(client):
+    with client.websocket_connect("/ws/stream") as socket:
+        json.loads(socket.receive_text())
+        for _ in range(40):
+            socket.send_bytes(pcm(0.1))
+        verdict = json.loads(socket.receive_text())
+
+    assert verdict["source"] == "mic"
+    assert verdict["source_label"] is None

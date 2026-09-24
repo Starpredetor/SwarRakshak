@@ -7,8 +7,15 @@ import { EventLog } from "./components/EventLog";
 import { EvidencePanel } from "./components/EvidencePanel";
 import { LayerCards } from "./components/LayerCards";
 import { RiskGauge } from "./components/RiskGauge";
+import { SourceBar } from "./components/SourceBar";
 import { RiskTimeline } from "./components/RiskTimeline";
-import { BAND_ACTION, type ClipInfo, type SessionInfo, type Verdict } from "./types";
+import {
+  BAND_ACTION,
+  type ClipInfo,
+  type RunInfo,
+  type SessionInfo,
+  type Verdict,
+} from "./types";
 
 // Two minutes of history at a 1 s hop. Enough to show a mid-call swap, short
 // enough that the chart stays readable when it is scaled down for video.
@@ -31,12 +38,15 @@ export default function App() {
   const [session, setSession] = useState<SessionInfo | null>(null);
   const [status, setStatus] = useState<SocketStatus>("connecting");
   const [clips, setClips] = useState<ClipInfo[]>([]);
+  const [run, setRun] = useState<RunInfo | null>(null);
   const [micActive, setMicActive] = useState(false);
   const [replaying, setReplaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const socketRef = useRef<DetectorSocket | null>(null);
   const micRef = useRef<MicHandle | null>(null);
+  // Read inside the socket callback, which closes over its first render.
+  const runRef = useRef<RunInfo | null>(null);
 
   useEffect(() => {
     const socket = new DetectorSocket(
@@ -46,9 +56,23 @@ export default function App() {
           setSession(message);
           // A reconnect starts a new server-side session, so the old history
           // belongs to a call that no longer exists.
+          runRef.current = null;
+          setRun(null);
+          setVerdicts([]);
+          setError(null);
+        } else if (message.type === "run") {
+          // A new source. Drop the previous run's history: mixing two clips
+          // on one timeline is what made A/B comparison unreadable.
+          runRef.current = message;
+          setRun(message);
           setVerdicts([]);
           setError(null);
         } else if (message.type === "verdict") {
+          // Verdicts scored from the previous source are still in flight when
+          // the source changes. Discard them rather than letting the old clip
+          // bleed into the new one's chart.
+          const current = runRef.current;
+          if (current && message.source !== current.source) return;
           setVerdicts((prev) => [...prev, message].slice(-MAX_VERDICTS));
         } else if (message.type === "error") {
           setError(message.message);
@@ -85,6 +109,7 @@ export default function App() {
     }
 
     try {
+      socketRef.current?.startMic();
       micRef.current = await startMicCapture(
         (buf) => socketRef.current?.sendPCM(buf),
         session?.sample_rate ?? 16000,
@@ -151,6 +176,8 @@ export default function App() {
         detectorName={session?.detector_name ?? "—"}
         detectorIsFallback={session?.detector_is_fallback ?? false}
       />
+
+      <SourceBar run={run} band={band} windows={verdicts.length} />
 
       <div className="grid">
         <RiskGauge risk={risk} band={band} action={BAND_ACTION[band]} stale={stale} />

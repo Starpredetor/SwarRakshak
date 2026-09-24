@@ -1,0 +1,31 @@
+# Cloning engines for building the evaluation set. INSTALL INTO .venv-tts,
+# never into .venv -- these pin their own torch and would replace the CUDA
+# build the detector and the live demo depend on.
+#
+#   py -3.12 -m venv .venv-tts
+#   .venv-tts/Scripts/python.exe -m pip install torch torchaudio \
+#       --index-url https://download.pytorch.org/whl/cu121
+#   .venv-tts/Scripts/python.exe -m pip install -r requirements-tts.txt
+
+coqui-tts==0.27.5      # XTTS-v2. Model is CPML-licensed (non-commercial).
+f5-tts==1.1.7          # flow-matching + Vocos decoder
+
+# The one pin that actually matters. coqui-tts requires >=4.57; transformers
+# 5.x removed isin_mps_friendly, which coqui-tts still imports. f5-tts pulls
+# 5.x by default, so without this pin the two engines cannot share a venv and
+# installing them in either order leaves one of them broken.
+transformers>=4.57,<5
+
+# Bundled ffmpeg binary, so Opus codec simulation works without a system-wide
+# install. scripts/codecs.py finds it through imageio_ffmpeg.
+imageio-ffmpeg==0.6.0
+
+# torchcodec must NOT be installed. f5-tts pulls it in, and transformers 4.57
+# will route audio decoding through it when present -- but on Windows it needs
+# FFmpeg *shared libraries* (not just the ffmpeg binary), and without them it
+# raises "WinError 127: The specified procedure could not be found" on import.
+# That failure surfaces inside both engines, which makes it look like an engine
+# problem rather than a decoder one. Removing it makes transformers fall back
+# to soundfile, which handles everything here.
+#
+#   .venv-tts/Scripts/python.exe -m pip uninstall -y torchcodec

@@ -84,6 +84,11 @@ export class DetectorSocket {
     this.send({ type: "stop" });
   }
 
+  /** Tell the server a microphone run is starting, so it clears prior state. */
+  startMic(): void {
+    this.send({ type: "mic_start" });
+  }
+
   private send(command: Record<string, unknown>): void {
     if (this.isOpen) this.socket!.send(JSON.stringify(command));
   }

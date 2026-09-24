@@ -125,8 +125,9 @@ async def test_summary_contains_no_audio(config, speech):
     summary = session.summary()
 
     assert set(summary) == {
-        "session_id", "duration_seconds", "windows_scored",
-        "windows_dropped", "peak_risk", "final_band", "band_seconds",
+        "session_id", "source", "source_label", "duration_seconds",
+        "windows_scored", "windows_dropped", "peak_risk", "final_band",
+        "band_seconds",
     }
     assert summary["windows_scored"] == 1
 

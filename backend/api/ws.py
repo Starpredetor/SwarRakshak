@@ -21,8 +21,8 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from backend.config import ROOT, get_config
 from backend.detector import loaded_detectors
-from backend.models import ErrorMessage
-from backend.stream.replay import resolve_clip, stream_clip
+from backend.models import ErrorMessage, RunInfo
+from backend.stream.replay import _KNOWN_LABELS, resolve_clip, stream_clip
 from backend.stream.session import Session
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,16 @@ async def stream_endpoint(websocket: WebSocket) -> None:
             await _send(websocket, ErrorMessage(message=str(exc)))
             return
 
+        # Ground truth from the folder name. Sent to the client for checking
+        # results by hand; it never reaches a detector.
+        parent = path.parent.name.lower()
+        label = parent if parent in _KNOWN_LABELS else None
+
+        session.reset(filename, label)
+        await _send(websocket, RunInfo(
+            session_id=session.session_id, source=filename, source_label=label
+        ))
+
         try:
             async for chunk in stream_clip(path, session.sample_rate):
                 if session.feed(chunk):
@@ -115,6 +125,14 @@ async def stream_endpoint(websocket: WebSocket) -> None:
                 if replay is not None and not replay.done():
                     replay.cancel()
                 replay = asyncio.create_task(run_replay(command.get("filename", "")))
+            elif kind == "mic_start":
+                if replay is not None and not replay.done():
+                    replay.cancel()
+                    replay = None
+                session.reset("mic", None)
+                await _send(websocket, RunInfo(
+                    session_id=session.session_id, source="mic", source_label=None
+                ))
             elif kind == "stop":
                 if replay is not None:
                     replay.cancel()

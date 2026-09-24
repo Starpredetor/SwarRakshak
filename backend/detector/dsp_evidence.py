@@ -126,9 +126,17 @@ class DSPEvidenceDetector(Detector):
             "shimmer": shimmer,
         }
 
-        if jitter == 0.0:
-            # Unvoiced window: the pitch features say nothing, so this layer
-            # declines rather than scoring on spectrum alone.
+        # Telephone-band and lossy-codec audio carries almost nothing above
+        # 6 kHz, which puts hf_ratio below anything these hand-picked ranges
+        # can interpret. Saying so is honest; folding an uninterpretable
+        # feature into a score is not.
+        interpretable = (
+            flatness >= _FLATNESS_RANGE[0] * 0.5
+            and hf_ratio >= _HF_RATIO_RANGE[0] * 0.5
+        )
+        if not interpretable or jitter == 0.0:
+            # Unvoiced, or outside the range these heuristics were picked
+            # for. Either way this layer declines rather than guessing.
             return LayerScore(
                 layer=self.name, score=0.0, confidence=0.0, abstain=True, detail=detail
             )

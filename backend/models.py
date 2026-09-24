@@ -32,11 +32,32 @@ class LayerScore(BaseModel):
     detail: dict[str, float] = Field(default_factory=dict)
 
 
+class RunInfo(BaseModel):
+    """A new run started: the client should clear its timeline.
+
+    A "run" is one continuous audio source -- one replayed clip, or one
+    microphone session. It exists because a WebSocket connection can carry
+    several in sequence, and scores from the previous one must not bleed into
+    the next.
+    """
+
+    type: Literal["run"] = "run"
+    session_id: str
+    source: str
+    source_label: str | None = Field(
+        default=None,
+        description="ground truth from the clip's folder (real/fake), for "
+                    "checking results by hand -- the detector never sees this",
+    )
+
+
 class Verdict(BaseModel):
     """Emitted once per hop (default 1 s) over the WebSocket."""
 
     type: Literal["verdict"] = "verdict"
     session_id: str
+    source: str = "mic"
+    source_label: str | None = None
     t: float = Field(description="seconds since session start")
     risk: int = Field(ge=0, le=100)
     band: Band

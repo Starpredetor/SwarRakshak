@@ -31,3 +31,7 @@ sessions.db
 Thumbs.db
 .idea/
 .vscode/
+
+#test data
+data/*
+/clips/*
