@@ -7,6 +7,10 @@ audio:
   hop_seconds: 1.0        # how often a verdict is emitted
   frame_ms: 25            # DSP frame
   hop_ms: 10              # DSP hop
+  # Windows quieter than this are not scored. A detector fed near-silence
+  # produces confident nonsense, and a gauge that drifts while nobody is
+  # speaking destroys trust faster than a miss does.
+  silence_rms: 0.005
 
 detector:
   # Shortlist tried in order by scripts/fetch_models.py; first that loads wins.

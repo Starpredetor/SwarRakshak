@@ -40,3 +40,177 @@ body {
 /* Layers on the roadmap rather than in the MVP: visibly inactive, never
    faked as running. */
 .layer-card--roadmap { opacity: 0.45; }
+
+/* --- layout ----------------------------------------------------------- */
+
+.app {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.header h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+.header__sub { color: var(--muted); font-weight: 400; font-size: 15px; }
+.header__note { margin-left: auto; color: var(--muted); font-size: 12px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+  gap: var(--gap);
+}
+
+@media (max-width: 860px) {
+  .grid { grid-template-columns: 1fr; }
+  .header__note { margin-left: 0; }
+}
+
+.panel__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.muted { color: var(--muted); font-size: 13px; }
+
+/* --- banners ---------------------------------------------------------- */
+
+.banner {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 14px;
+  border: 1px solid;
+}
+.banner--warn { background: #2a2109; border-color: var(--medium); color: #f0c674; }
+.banner--error { background: #2a1113; border-color: var(--high); color: #ffb3ae; }
+
+/* --- controls --------------------------------------------------------- */
+
+.controls { display: flex; flex-direction: column; gap: 12px; }
+.controls__row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.controls__label { color: var(--muted); font-size: 13px; }
+.controls__detector { color: var(--muted); font-size: 13px; font-family: ui-monospace, monospace; }
+.controls__fallback { color: var(--high); }
+
+.status {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.status--open { color: var(--low); border-color: var(--low); }
+.status--connecting { color: var(--medium); border-color: var(--medium); }
+.status--closed { color: var(--high); border-color: var(--high); }
+
+.btn {
+  background: #1c242e;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn--active { border-color: var(--low); color: var(--low); }
+
+.select {
+  background: #1c242e;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 260px;
+}
+
+/* --- gauge ------------------------------------------------------------ */
+
+.gauge { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.gauge__track { stroke: #1f2836; }
+
+/* Eased over roughly the hop interval: an instant jump reads as a rendering
+   glitch on video rather than as a detection. */
+.gauge__fill { transition: stroke-dasharray 700ms ease-out, stroke 400ms linear; }
+.gauge__fill.band-LOW { stroke: var(--low); }
+.gauge__fill.band-MEDIUM { stroke: var(--medium); }
+.gauge__fill.band-HIGH { stroke: var(--high); }
+
+.gauge__value { font-size: 52px; font-weight: 700; fill: currentColor; }
+.gauge__value.band-LOW { fill: var(--low); }
+.gauge__value.band-MEDIUM { fill: var(--medium); }
+.gauge__value.band-HIGH { fill: var(--high); }
+.gauge__scale { font-size: 12px; fill: var(--muted); letter-spacing: 0.08em; }
+
+.gauge__band { font-size: 20px; font-weight: 700; letter-spacing: 0.1em; }
+.gauge__action { color: var(--muted); font-size: 14px; }
+.gauge__stale { color: var(--muted); font-size: 12px; font-style: italic; margin-top: 4px; }
+
+/* --- layers ----------------------------------------------------------- */
+
+.layers {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.layer-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background: #111720;
+}
+.layer-card__title { font-size: 13px; font-weight: 600; }
+.layer-card__score { font-size: 28px; font-weight: 700; margin: 6px 0; }
+.layer-card__abstain { font-size: 14px; font-weight: 400; color: var(--muted); font-style: italic; }
+.layer-card__blurb { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.layer-card__confidence { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+/* --- evidence --------------------------------------------------------- */
+
+.evidence { width: 100%; border-collapse: collapse; font-size: 13px; }
+.evidence th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: 8px;
+}
+.evidence td { padding: 6px 0; border-top: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.evidence__outside { color: var(--medium); font-weight: 600; }
+.evidence__caveat { margin: 12px 0 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+/* --- events ----------------------------------------------------------- */
+
+.events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.events__row {
+  display: grid;
+  grid-template-columns: 60px 80px 1fr auto;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 13px;
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
+}
+.events__time { color: var(--muted); font-variant-numeric: tabular-nums; }
+.events__band { font-weight: 700; letter-spacing: 0.05em; }
+.events__action { color: var(--text); }
+.events__risk { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.footer {
+  color: var(--muted);
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  text-align: right;
+}

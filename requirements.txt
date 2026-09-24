@@ -20,11 +20,14 @@ transformers==4.47.1
 
 # --- fallback detector ---
 scikit-learn==1.6.0
+joblib==1.4.2
 
 # --- optional: ONNX export / CPU-fast path ---
 # onnxruntime-gpu==1.20.1
 # optimum==1.23.3
 
-# --- dev ---
+# --- dev / tooling ---
 pytest==8.3.4
 httpx==0.28.1
+pytest-asyncio==0.25.0
+websockets==14.1   # scripts/smoke_test.py client

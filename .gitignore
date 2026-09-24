@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+.venv-tts/
+venv-tts/*
 *.egg-info/
 
 # Node
@@ -14,6 +16,7 @@ data/models/*
 !data/models/.gitkeep
 data/demo_clips/*
 !data/demo_clips/.gitkeep
+!data/demo_clips/README.md
 *.onnx
 *.pt
 *.bin

@@ -5,6 +5,7 @@ multi-second stall in the middle of a live call.
 """
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,12 +13,28 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api import routes, ws
 from backend.config import get_settings
+from backend.detector import build_detectors, loaded_detectors
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
+)
+logger = logging.getLogger("swarrakshak")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Build detectors on startup, release GPU memory on shutdown."""
-    raise NotImplementedError
+    detectors = build_detectors()
+    logger.info("detectors ready: %s", [d.name for d in detectors])
+    try:
+        yield
+    finally:
+        for detector in loaded_detectors():
+            try:
+                detector.close()
+            except Exception:
+                logger.warning("failed to close %s", detector.name, exc_info=True)
 
 
 app = FastAPI(
