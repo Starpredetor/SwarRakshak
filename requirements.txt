@@ -1,0 +1,30 @@
+# --- core service ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-multipart==0.0.20
+pyyaml==6.0.2
+
+# --- audio / DSP ---
+numpy==1.26.4
+scipy==1.14.1
+librosa==0.10.2.post1
+soundfile==0.12.1
+
+# --- L1 model (GPU) ---
+# Install torch FIRST, matched to your CUDA version, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
+torch>=2.2
+transformers==4.47.1
+
+# --- fallback detector ---
+scikit-learn==1.6.0
+
+# --- optional: ONNX export / CPU-fast path ---
+# onnxruntime-gpu==1.20.1
+# optimum==1.23.3
+
+# --- dev ---
+pytest==8.3.4
+httpx==0.28.1

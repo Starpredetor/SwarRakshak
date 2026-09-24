@@ -1,0 +1,48 @@
+# SwarRakshak MVP configuration.
+# Values here are defaults; anything in .env overrides them.
+
+audio:
+  sample_rate: 16000      # Hz, mono. Browser downsamples before sending.
+  window_seconds: 2.0     # analysis window fed to the detectors
+  hop_seconds: 1.0        # how often a verdict is emitted
+  frame_ms: 25            # DSP frame
+  hop_ms: 10              # DSP hop
+
+detector:
+  # Shortlist tried in order by scripts/fetch_models.py; first that loads wins.
+  spoof_model_candidates:
+    - MelodyMachine/Deepfake-audio-detection-V2
+    - motheecreator/Deepfake-audio-detection
+  # Label in the model's id2label that means "synthetic / spoofed".
+  # Verify this per model -- some order labels the other way round.
+  spoof_label: "fake"
+  batch: 1
+  warmup_iters: 3         # run N dummy forwards at startup so window 1 isn't slow
+
+fusion:
+  # L1 is the only trained layer in the MVP. L1b is DSP evidence, weighted low
+  # because it is a heuristic, not a calibrated model.
+  weights:
+    l1_spoof: 0.85
+    l1b_dsp: 0.15
+  ema_alpha: 0.4          # smoothing over consecutive windows; lower = steadier
+  ema_window: 4
+
+  # Calibration: scripts/calibrate.py rewrites these from your own demo clips.
+  # decision = sigmoid((fused - midpoint) / temperature)
+  calibration:
+    midpoint: 0.5
+    temperature: 0.15
+
+risk:
+  # Bands with hysteresis: a band is entered at `enter` and only left once the
+  # score crosses `exit`. Stops the gauge flickering on camera.
+  bands:
+    LOW:    { enter: 0,  exit: 44 }
+    MEDIUM: { enter: 40, exit: 79 }
+    HIGH:   { enter: 75, exit: 100 }
+  min_dwell_windows: 2    # a band must hold this many windows before it is announced
+
+session:
+  max_seconds: 900
+  log_features_only: true  # DPDP-2023 posture: never persist raw audio

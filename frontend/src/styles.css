@@ -1,0 +1,42 @@
+/* Dark operator-console palette. Dark because the demo is screen-recorded and
+   a light UI blooms badly under video compression. */
+
+:root {
+  --bg: #0b0f14;
+  --panel: #141a22;
+  --border: #223041;
+  --text: #e6edf3;
+  --muted: #8899a6;
+
+  --low: #2ea043;
+  --medium: #d29922;
+  --high: #f85149;
+  --accent: #58a6ff;
+
+  --radius: 10px;
+  --gap: 16px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--gap);
+}
+
+.band-LOW { color: var(--low); }
+.band-MEDIUM { color: var(--medium); }
+.band-HIGH { color: var(--high); }
+
+/* Layers on the roadmap rather than in the MVP: visibly inactive, never
+   faked as running. */
+.layer-card--roadmap { opacity: 0.45; }

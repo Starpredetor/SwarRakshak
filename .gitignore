@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+frontend/dist/
+
+# Models & data (large, fetched by scripts/fetch_models.py)
+data/models/*
+!data/models/.gitkeep
+data/demo_clips/*
+!data/demo_clips/.gitkeep
+*.onnx
+*.pt
+*.bin
+
+# Runtime
+.env
+sessions.db
+*.log
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
